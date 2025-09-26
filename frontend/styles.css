@@ -1,0 +1,54 @@
+/* Fondo general */
+.bg-custom {
+  background: linear-gradient(135deg, #a8e6cf, #dcedc1);
+  min-height: 100vh;
+}
+
+/* Encabezado */
+.bg-header {
+  background-color: #388e3c; /* Verde fuerte */
+}
+
+/* Tarjeta del formulario */
+.card-custom {
+  background-color: #f1f8e9; /* Verde muy claro */
+  border: 1px solid #c5e1a5;
+}
+
+/* Títulos dentro de la tarjeta */
+.card-custom h2 {
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+/* Botones personalizados */
+.btn-primary {
+  background-color: #43a047;
+  border-color: #388e3c;
+}
+
+.btn-primary:hover {
+  background-color: #2e7d32;
+  border-color: #1b5e20;
+}
+
+.btn-success {
+  background-color: #66bb6a;
+  border-color: #4caf50;
+}
+
+.btn-success:hover {
+  background-color: #388e3c;
+  border-color: #2e7d32;
+}
+
+.btn-secondary {
+  background-color: #c8e6c9;
+  border-color: #a5d6a7;
+  color: #2e7d32;
+}
+
+.btn-secondary:hover {
+  background-color: #a5d6a7;
+  border-color: #81c784;
+}
