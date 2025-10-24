@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Preconsulta</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <style>
+    /* estilos pequeños específicos para bodychart */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    .chart-card {
+      background: white;
+      padding: .75rem;
+      border-radius: .5rem;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    .chart-card h6 { margin-bottom: .5rem; }
+    .chart-canvas {
+      width: 100%;
+      height: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: .25rem;
+      touch-action: none;
+      background-color: #fff;
+    }
+    .preview-img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: .5rem auto 0;
+      border: 1px solid #ddd;
+      border-radius: .25rem;
+    }
+
+    /* Móvil: mostrar de a 1 */
+    @media (max-width: 768px) {
+      .chart-grid {
+        grid-template-columns: 1fr;
+      }
+      .mobile-nav {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: .5rem;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-custom">
+
+  <header class="text-center py-4 bg-header shadow-sm">
+    <h1 class="mb-0 text-white fw-bold">Fisioterapia - Felipe Mondada</h1>
+  </header>
+
+  <div class="container py-4">
+    <h1 class="text-center mb-4">Preconsulta</h1>
+
+    <form id="preConsultaForm" class="bg-white p-4 rounded shadow" autocomplete="off">
+      <!-- === (todos tus campos anteriores se mantienen) === -->
+      <h5>Datos patronímicos</h5>
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label class="form-label">Nombres</label>
+          <input type="text" class="form-control" name="nombres" id="nombres" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Apellidos</label>
+          <input type="text" class="form-control" name="apellidos" id="apellidos" required>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Fecha de nacimiento</label>
+        <input type="date" class="form-control" name="fechaNacimiento" id="fechaNacimiento" required>
+        <small class="text-muted" id="edad"></small>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Teléfono celular</label>
+        <input
+          type="tel"
+          class="form-control"
+          name="telefono"
+          id="telefono"
+          pattern="[0-9]{6,15}"
+          inputmode="numeric"
+          placeholder="Ej: 091234567"
+        >
+        <small class="text-muted">Solo números (ej. 091234567).</small>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Ocupación</label>
+        <input type="text" class="form-control" name="ocupacion" id="ocupacion">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Lugar de residencia</label>
+        <input type="text" class="form-control" name="residencia" id="residencia" placeholder="Ej: Montevideo, Prado" required>
+        <small class="text-muted">Busca localidades de Uruguay (autocomplete).</small>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Círculo familiar (con quién vive)</label>
+        <textarea class="form-control" name="familia" id="familia"></textarea>
+      </div>
+
+      <!-- Enfermedades -->
+      <div class="mb-3">
+        <label class="form-label">Enfermedades previas</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="enfermedades" value="Diabetes" id="enfDiabetes">
+          <label class="form-check-label" for="enfDiabetes">Diabetes</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="enfermedades" value="Hipertensión" id="enfHipertension">
+          <label class="form-check-label" for="enfHipertension">Hipertensión</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="enfermedades" value="Asma" id="enfAsma">
+          <label class="form-check-label" for="enfAsma">Asma</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="enfermedades" value="Otro" id="enfOtro">
+          <label class="form-check-label" for="enfOtro">Otro</label>
+        </div>
+        <input type="text" class="form-control mt-2 d-none" id="otraEnfermedad" name="otraEnfermedad" placeholder="Especifique otra enfermedad">
+      </div>
+
+      <!-- Implantes -->
+      <div class="mb-3">
+        <label class="form-label">Dispositivos electrónicos implantados</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="implantes" value="Stent" id="implStent">
+          <label class="form-check-label" for="implStent">Stent</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="implantes" value="Marcapasos" id="implMarcapasos">
+          <label class="form-check-label" for="implMarcapasos">Marcapasos</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="implantes" value="Otro" id="implOtro">
+          <label class="form-check-label" for="implOtro">Otro</label>
+        </div>
+        <input type="text" class="form-control mt-2 d-none" id="otroImplante" name="otroImplante" placeholder="Especifique otro dispositivo">
+      </div>
+
+      <!-- Género -->
+      <div class="mb-3">
+        <label class="form-label">Género</label>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="genero" id="generoHombre" value="hombre" checked>
+          <label class="form-check-label" for="generoHombre">Hombre</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="genero" id="generoMujer" value="mujer">
+          <label class="form-check-label" for="generoMujer">Mujer</label>
+        </div>
+      </div>
+
+      <!-- === BODY CHART: reemplaza canvas único por 4 vistas === -->
+      <div class="mb-3">
+        <label class="form-label">BODY CHART</label>
+        <p class="text-muted">Pinte sobre el esquema corporal todas las zonas donde tenga dolor (más dolor = más oscuro).</p>
+        <p class="text-muted">Recordá guardar cada imagen para que sea enviada en la preconsulta.</p>
+
+        <div class="chart-grid mt-3" id="chartGrid">
+          <!-- 4 cards (Frente / Espalda / Lado Izq / Lado Der) -->
+          <div class="chart-card" data-view="front">
+            <h6>Frente</h6>
+            <canvas class="chart-canvas" id="canvas-front" width="400" height="600"></canvas>
+            <div class="mt-2">
+              <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="front">Borrar</button>
+              <button type="button" class="btn btn-success btn-sm btn-save" data-target="front">Guardar imagen</button>
+            </div>
+            <p class="text-muted small mt-2 status" id="status-front">Aún no se guardaron los cambios de pintado en la imagen.</p>
+            <img class="preview-img d-none" id="preview-front" alt="Preview frente">
+          </div>
+
+          <div class="chart-card" data-view="back">
+            <h6>Espalda</h6>
+            <canvas class="chart-canvas" id="canvas-back" width="400" height="600"></canvas>
+            <div class="mt-2">
+              <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="back">Borrar</button>
+              <button type="button" class="btn btn-success btn-sm btn-save" data-target="back">Guardar imagen</button>
+            </div>
+            <p class="text-muted small mt-2 status" id="status-back">Aún no se guardaron los cambios de pintado en la imagen.</p>
+            <img class="preview-img d-none" id="preview-back" alt="Preview espalda">
+          </div>
+
+          <div class="chart-card" data-view="sideLeft">
+            <h6>Lado izquierdo</h6>
+            <canvas class="chart-canvas" id="canvas-sideLeft" width="400" height="600"></canvas>
+            <div class="mt-2">
+              <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="sideLeft">Borrar</button>
+              <button type="button" class="btn btn-success btn-sm btn-save" data-target="sideLeft">Guardar imagen</button>
+            </div>
+            <p class="text-muted small mt-2 status" id="status-sideLeft">Aún no se guardaron los cambios de pintado en la imagen.</p>
+            <img class="preview-img d-none" id="preview-sideLeft" alt="Preview lado izquierdo">
+          </div>
+
+          <div class="chart-card" data-view="sideRight">
+            <h6>Lado derecho</h6>
+            <canvas class="chart-canvas" id="canvas-sideRight" width="400" height="600"></canvas>
+            <div class="mt-2">
+              <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="sideRight">Borrar</button>
+              <button type="button" class="btn btn-success btn-sm btn-save" data-target="sideRight">Guardar imagen</button>
+            </div>
+            <p class="text-muted small mt-2 status" id="status-sideRight">Aún no se guardaron los cambios de pintado en la imagen.</p>
+            <img class="preview-img d-none" id="preview-sideRight" alt="Preview lado derecho">
+          </div>
+        </div>
+
+          <div class="mobile-nav d-none" id="mobileNav">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="prevView">Anterior</button>
+          <div class="text-center align-self-center"><small id="mobileViewLabel"></small></div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="nextView">Siguiente</button>
+        </div>
+
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Diagnóstico médico (si lo tiene)</label>
+        <textarea class="form-control" name="diagnostico" id="diagnostico"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Motivo de consulta</label>
+        <textarea class="form-control" name="motivo" id="motivo"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">¿Tiene dolor hace tres meses o más?</label>
+        <select class="form-select" name="dolorCronico" id="dolorCronico">
+          <option value="Sí">Sí</option>
+          <option value="No">No</option>
+        </select>
+      </div>
+
+      <!-- oculto: no usamos este hidden para enviar; el JS añadirá las imágenes guardadas al FormData -->
+      <input type="hidden" name="bodyChartData" id="bodyChartData">
+
+      <button type="submit" class="btn btn-primary">Enviar</button>
+    </form>
+  </div>
+
+  <!-- scripts -->
+  <script src="index.js"></script>
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=${GOOGLE_API_KEY}&libraries=places&language=es&region=UY&callback=initAutocomplete"
+    async
+    defer
+  ></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</body>
+</html>
