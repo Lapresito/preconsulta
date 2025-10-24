@@ -165,66 +165,53 @@
         </div>
       </div>
 
-      <!-- === BODY CHART: reemplaza canvas único por 4 vistas === -->
-      <div class="mb-3">
-        <label class="form-label">BODY CHART</label>
-        <p class="text-muted">Pinte sobre el esquema corporal todas las zonas donde tenga dolor (más dolor = más oscuro).</p>
-        <p class="text-muted">Recordá guardar cada imagen para que sea enviada en la preconsulta.</p>
+<!-- === BODY CHART === -->
+<div class="mb-3">
+  <label class="form-label">BODY CHART</label>
+  <p class="text-muted">Pinte sobre el esquema corporal todas las zonas donde tenga dolor (más dolor = más oscuro).</p>
+  <p class="text-muted">Puede borrar el dibujo si desea volver a empezar.</p>
 
-        <div class="chart-grid mt-3" id="chartGrid">
-          <!-- 4 cards (Frente / Espalda / Lado Izq / Lado Der) -->
-          <div class="chart-card" data-view="front">
-            <h6>Frente</h6>
-            <canvas class="chart-canvas" id="canvas-front" width="400" height="600"></canvas>
-            <div class="mt-2">
-              <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="front">Borrar</button>
-              <button type="button" class="btn btn-success btn-sm btn-save" data-target="front">Guardar imagen</button>
-            </div>
-            <p class="text-muted small mt-2 status" id="status-front">Aún no se guardaron los cambios de pintado en la imagen.</p>
-            <img class="preview-img d-none" id="preview-front" alt="Preview frente">
-          </div>
-
-          <div class="chart-card" data-view="back">
-            <h6>Espalda</h6>
-            <canvas class="chart-canvas" id="canvas-back" width="400" height="600"></canvas>
-            <div class="mt-2">
-              <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="back">Borrar</button>
-              <button type="button" class="btn btn-success btn-sm btn-save" data-target="back">Guardar imagen</button>
-            </div>
-            <p class="text-muted small mt-2 status" id="status-back">Aún no se guardaron los cambios de pintado en la imagen.</p>
-            <img class="preview-img d-none" id="preview-back" alt="Preview espalda">
-          </div>
-
-          <div class="chart-card" data-view="sideLeft">
-            <h6>Lado izquierdo</h6>
-            <canvas class="chart-canvas" id="canvas-sideLeft" width="400" height="600"></canvas>
-            <div class="mt-2">
-              <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="sideLeft">Borrar</button>
-              <button type="button" class="btn btn-success btn-sm btn-save" data-target="sideLeft">Guardar imagen</button>
-            </div>
-            <p class="text-muted small mt-2 status" id="status-sideLeft">Aún no se guardaron los cambios de pintado en la imagen.</p>
-            <img class="preview-img d-none" id="preview-sideLeft" alt="Preview lado izquierdo">
-          </div>
-
-          <div class="chart-card" data-view="sideRight">
-            <h6>Lado derecho</h6>
-            <canvas class="chart-canvas" id="canvas-sideRight" width="400" height="600"></canvas>
-            <div class="mt-2">
-              <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="sideRight">Borrar</button>
-              <button type="button" class="btn btn-success btn-sm btn-save" data-target="sideRight">Guardar imagen</button>
-            </div>
-            <p class="text-muted small mt-2 status" id="status-sideRight">Aún no se guardaron los cambios de pintado en la imagen.</p>
-            <img class="preview-img d-none" id="preview-sideRight" alt="Preview lado derecho">
-          </div>
-        </div>
-
-          <div class="mobile-nav d-none" id="mobileNav">
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="prevView">Anterior</button>
-          <div class="text-center align-self-center"><small id="mobileViewLabel"></small></div>
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="nextView">Siguiente</button>
-        </div>
-
+  <div class="chart-grid mt-3" id="chartGrid">
+    <div class="chart-card" data-view="front">
+      <h6>Frente</h6>
+      <canvas class="chart-canvas" id="canvas-front" width="400" height="600"></canvas>
+      <div class="mt-2">
+        <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="front">Borrar</button>
       </div>
+    </div>
+
+    <div class="chart-card" data-view="back">
+      <h6>Espalda</h6>
+      <canvas class="chart-canvas" id="canvas-back" width="400" height="600"></canvas>
+      <div class="mt-2">
+        <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="back">Borrar</button>
+      </div>
+    </div>
+
+    <div class="chart-card" data-view="sideLeft">
+      <h6>Lado izquierdo</h6>
+      <canvas class="chart-canvas" id="canvas-sideLeft" width="400" height="600"></canvas>
+      <div class="mt-2">
+        <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="sideLeft">Borrar</button>
+      </div>
+    </div>
+
+    <div class="chart-card" data-view="sideRight">
+      <h6>Lado derecho</h6>
+      <canvas class="chart-canvas" id="canvas-sideRight" width="400" height="600"></canvas>
+      <div class="mt-2">
+        <button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="sideRight">Borrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobile-nav d-none" id="mobileNav">
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="prevView">Anterior</button>
+    <div class="text-center align-self-center"><small id="mobileViewLabel"></small></div>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="nextView">Siguiente</button>
+  </div>
+</div>
+<!-- === FIN BODY CHART === -->
 
       <div class="mb-3">
         <label class="form-label">Diagnóstico médico (si lo tiene)</label>
