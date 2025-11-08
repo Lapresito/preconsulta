@@ -160,7 +160,7 @@ await resend.emails.send({
   })),
 });
 
-
+  console.log("✅ Correo enviado con Resend hacia:" , process.env.EMAIL_TO);
     res.json({ message: "Los datos fueron enviados exitosamente ✅ \n Gracias por tu tiempo!" });
   } catch (error) {
     console.error("❌ Error enviando correo:", error);
