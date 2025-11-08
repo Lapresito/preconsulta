@@ -149,7 +149,7 @@ const html = `
 
 // 📨 Envío con Resend
 await resend.emails.send({
-  from: "Preconsulta Web <noreply@resend.dev>", // remitente genérico
+  from: "Preconsulta Web <onboarding@resend.dev>", // remitente genérico
   to: process.env.EMAIL_TO, // destino
   subject: "Nueva Preconsulta",
   html,
