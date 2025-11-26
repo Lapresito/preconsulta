@@ -14,7 +14,6 @@ const imageMap = {
   },
 };
 
-// vistas ordenadas (para mobile prev/next)
 const viewOrder = ["front", "back", "sideLeft", "sideRight"];
 
 // --------------------- Edad y validaciones ---------------------
@@ -113,7 +112,7 @@ function loadAllBackgrounds(gender) {
       c.height = bg.naturalHeight || 1200;
       ctx.clearRect(0, 0, c.width, c.height);
       ctx.drawImage(bg, 0, 0, c.width, c.height);
-      hasChanges[view] = false; // reset
+      hasChanges[view] = false;
     };
   });
 }
@@ -128,6 +127,21 @@ generoRadios.forEach((radio) =>
   })
 );
 
+// ===== COLOR PICKER (ÚNICO Y CORRECTO) =====
+let brushColor = "blue"; // inicial
+
+document.querySelectorAll(".color-dot").forEach(dot => {
+  dot.addEventListener("click", () => {
+    brushColor = dot.dataset.color;
+
+    document.querySelectorAll(".color-dot").forEach(d => d.classList.remove("selected"));
+    dot.classList.add("selected");
+  });
+});
+
+document.querySelector('.color-dot[data-color="blue"]').classList.add("selected");
+
+// --------------------- Drawer ---------------------
 function makeDrawer(view) {
   const c = canvases[view];
   const ctx = ctxs[view];
@@ -156,15 +170,25 @@ function makeDrawer(view) {
   function draw(e) {
     if (!painting) return;
     const pos = getPos(e);
+    const brushSize = 15;
+
     const grad = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, 30);
-    grad.addColorStop(0, "rgba(0, 100, 255, 0.12)");
-    grad.addColorStop(1, "rgba(0, 100, 255, 0)");
+
+    if (brushColor === "blue") {
+      grad.addColorStop(0, "rgba(0, 100, 255, 0.12)");
+      grad.addColorStop(1, "rgba(0, 100, 255, 0)");
+    } else {
+      grad.addColorStop(0, "rgba(120, 0, 200, 0.12)");
+      grad.addColorStop(1, "rgba(120, 0, 200, 0)");
+    }
+
     ctx.fillStyle = grad;
-    ctx.fillRect(pos.x - 30, pos.y - 30, 60, 60);
-    hasChanges[view] = true; // 🔹 Marca el canvas como modificado
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, brushSize, 0, Math.PI * 2);
+    ctx.fill();
+    hasChanges[view] = true;
   }
 
-  // eventos mouse/touch
   ["mousedown", "touchstart"].forEach((ev) =>
     c.addEventListener(ev, (e) => {
       e.preventDefault();
@@ -184,12 +208,11 @@ function makeDrawer(view) {
     })
   );
 
-  // botón borrar
   const clearBtn = document.querySelector(`.btn-clear[data-target="${view}"]`);
   clearBtn.addEventListener("click", () => {
     ctx.clearRect(0, 0, c.width, c.height);
     ctx.drawImage(backgrounds[view], 0, 0, c.width, c.height);
-    hasChanges[view] = false; // 🔹 Se marca como “no modificado”
+    hasChanges[view] = false;
   });
 }
 Object.keys(canvases).forEach(makeDrawer);
@@ -210,7 +233,6 @@ document.getElementById("preConsultaForm").addEventListener("submit", async (e) 
   const gender = document.querySelector('input[name="genero"]:checked')?.value || "hombre";
   const prefix = gender === "mujer" ? "woman" : "male";
 
-  // 🔸 Capturar solo los canvases modificados
   Object.keys(canvases).forEach((view) => {
     if (hasChanges[view]) {
       const dataURL = canvases[view].toDataURL("image/png");

@@ -166,10 +166,43 @@
       </div>
 
 <!-- === BODY CHART === -->
+
+
 <div class="mb-3">
   <label class="form-label">BODY CHART</label>
-  <p class="text-muted">Pinte sobre el esquema corporal todas las zonas donde tenga dolor (más dolor = más oscuro).</p>
+  <p class="text-muted">Pinte sobre el esquema corporal todas las zonas donde tenga dolor o molestia</p>
   <p class="text-muted">Puede borrar el dibujo si desea volver a empezar.</p>
+  
+  <div class="d-flex align-items-center gap-3">
+    <h6 class="text-muted mb-0">Azul menos dolor, violeta mas dolor.</h6>
+
+    <div id="colorSelector" class="d-flex gap-3">
+      <div class="color-dot" data-color="blue"></div>
+      <div class="color-dot" data-color="violet"></div>
+    </div>
+  </div>
+
+
+  <style>
+    .color-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: .15s;
+    }
+    .color-dot.selected {
+      border-color: #000;
+      transform: scale(1.1);
+    }
+    .color-dot[data-color="blue"] { background: #0064ff; }
+    .color-dot[data-color="violet"] { background: #7800c8; }
+
+  </style>
+
+
+
 
   <div class="chart-grid mt-3" id="chartGrid">
     <div class="chart-card" data-view="front">
