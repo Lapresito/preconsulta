@@ -1,0 +1,232 @@
+/* Fondo general */
+.bg-custom {
+  background: linear-gradient(135deg, #a8e6cf, #dcedc1);
+  min-height: 100vh;
+}
+
+/* Encabezado */
+.bg-header {
+  background-color: #388e3c; /* Verde fuerte */
+}
+
+/* Tarjeta del formulario */
+.card-custom {
+  background-color: #f1f8e9; /* Verde muy claro */
+  border: 1px solid #c5e1a5;
+}
+
+/* Títulos dentro de la tarjeta */
+.card-custom h2 {
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+/* Botones personalizados */
+.btn-primary {
+  background-color: #43a047;
+  border-color: #388e3c;
+}
+
+.btn-primary:hover {
+  background-color: #2e7d32;
+  border-color: #1b5e20;
+}
+
+.btn-success {
+  background-color: #66bb6a;
+  border-color: #4caf50;
+}
+
+.btn-success:hover {
+  background-color: #388e3c;
+  border-color: #2e7d32;
+}
+
+.btn-secondary {
+  background-color: #c8e6c9;
+  border-color: #a5d6a7;
+  color: #2e7d32;
+}
+
+.btn-secondary:hover {
+  background-color: #a5d6a7;
+  border-color: #81c784;
+}
+
+/* Slider escala de dolor */
+.dolor-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #43a047, #e53935);
+  outline: none;
+  cursor: pointer;
+  margin: .5rem 0 .25rem;
+}
+
+.dolor-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #388e3c;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: border-color .15s;
+}
+
+.dolor-slider::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid #388e3c;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+
+.dolor-slider::-webkit-slider-thumb:hover,
+.dolor-slider::-moz-range-thumb:hover {
+  border-color: #e53935;
+}
+
+.dolor-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: .78rem;
+  color: #757575;
+}
+
+/* Badges obligatorio / opcional */
+.badge-req {
+  font-size: .7rem;
+  font-weight: 600;
+  color: #c62828;
+  margin-left: .4rem;
+}
+
+.badge-opt {
+  font-size: .7rem;
+  font-weight: 400;
+  color: #1565c0;
+  margin-left: .4rem;
+}
+
+/* Secciones del formulario */
+.form-section {
+  margin-bottom: 1.75rem;
+}
+
+.section-header {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  font-weight: 700;
+  font-size: .85rem;
+  padding: .45rem .75rem;
+  border-left: 4px solid #43a047;
+  border-radius: .25rem;
+  margin-bottom: 1.25rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* Labels más legibles para adultos mayores */
+.form-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #2d2d2d;
+}
+
+/* Checkboxes en columnas */
+.check-grid {
+  columns: 2;
+  column-gap: 1.5rem;
+}
+
+.check-grid .form-check {
+  break-inside: avoid;
+}
+
+/* Color dots */
+.color-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: .15s;
+}
+.color-dot.selected {
+  border-color: #000;
+  transform: scale(1.1);
+}
+.color-dot[data-color="blue"]   { background: #0064ff; }
+.color-dot[data-color="violet"] { background: #7800c8; }
+
+/* Canvas grid */
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.chart-card {
+  background: white;
+  padding: .75rem;
+  border-radius: .5rem;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  text-align: center;
+}
+
+.chart-card h6 { margin-bottom: .5rem; }
+
+.chart-canvas {
+  width: 100%;
+  height: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: .25rem;
+  touch-action: none;
+  background-color: #fff;
+}
+
+@media (max-width: 768px) {
+  .chart-grid { grid-template-columns: 1fr; }
+}
+
+/* Mobile nav del body chart */
+.mobile-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: .75rem;
+  padding: .6rem .75rem;
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  border-radius: .5rem;
+}
+
+.mobile-nav .btn {
+  min-width: 90px;
+  font-weight: 600;
+  font-size: .9rem;
+  background-color: #388e3c;
+  border-color: #2e7d32;
+  color: #fff;
+}
+
+.mobile-nav .btn:hover {
+  background-color: #2e7d32;
+  border-color: #1b5e20;
+}
+
+#mobileViewLabel {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1b5e20;
+  text-align: center;
+  line-height: 1.3;
+}

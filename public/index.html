@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Preconsulta</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+
+<body class="bg-custom">
+
+  <header class="text-center py-4 bg-header shadow-sm">
+    <h1 class="mb-0 text-white fw-bold">Fisioterapia - Felipe Mondada</h1>
+  </header>
+
+  <div class="container py-4">
+    <h1 class="text-center mb-4">Preconsulta</h1>
+
+    <form id="preConsultaForm" class="bg-white p-4 rounded shadow" autocomplete="off">
+
+      <!-- ===== SECCIÓN 1: DATOS PERSONALES ===== -->
+      <div class="form-section">
+        <div class="section-header">Datos personales</div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Nombres <span class="badge-req">*Obligatorio</span></label>
+            <input type="text" class="form-control" name="nombres" id="nombres" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Apellidos <span class="badge-req">*Obligatorio</span></label>
+            <input type="text" class="form-control" name="apellidos" id="apellidos" required>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Fecha de nacimiento <span class="badge-req">*Obligatorio</span></label>
+            <input type="date" class="form-control" name="fechaNacimiento" id="fechaNacimiento" required>
+            <small class="text-muted" id="edad"></small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Género <span class="badge-req">*Obligatorio</span></label>
+            <div class="d-flex gap-4 mt-1">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="genero" id="generoHombre" value="hombre" checked>
+                <label class="form-check-label" for="generoHombre">Hombre</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="genero" id="generoMujer" value="mujer">
+                <label class="form-check-label" for="generoMujer">Mujer</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="genero" id="generoOtro" value="otro">
+                <label class="form-check-label" for="generoOtro">Otro</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Teléfono de contacto <span class="badge-req">*Obligatorio</span></label>
+            <input
+              type="tel"
+              class="form-control"
+              name="telefono"
+              id="telefono"
+              pattern="[0-9]{6,15}"
+              inputmode="numeric"
+              placeholder="Ej: 091234567"
+              required
+            >
+            <small class="text-muted">Solo números (ej. 091234567).</small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Correo electrónico <span class="badge-opt">*Opcional</span></label>
+            <input type="email" class="form-control" name="email" id="email" placeholder="Ej: ejemplo@correo.com">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Ocupación <span class="badge-opt">*Opcional</span></label>
+          <input type="text" class="form-control" name="ocupacion" id="ocupacion">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Lugar de residencia <span class="badge-opt">*Opcional</span></label>
+          <input type="text" class="form-control" name="residencia" id="residencia" placeholder="Ej: Maldonado, Punta del Este">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Círculo familiar (con quién vive) <span class="badge-opt">*Opcional</span></label>
+          <textarea class="form-control" name="familia" id="familia"></textarea>
+        </div>
+      </div>
+
+      <!-- ===== SECCIÓN 2: HISTORIAL MÉDICO ===== -->
+      <div class="form-section">
+        <div class="section-header">Historial médico</div>
+
+        <div class="mb-3">
+          <label class="form-label">Enfermedades previas <span class="badge-opt">*Opcional</span></label>
+          <div class="check-grid">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Diabetes" id="enfDiabetes">
+              <label class="form-check-label" for="enfDiabetes">Diabetes</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Hipertensión" id="enfHipertension">
+              <label class="form-check-label" for="enfHipertension">Hipertensión</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Asma" id="enfAsma">
+              <label class="form-check-label" for="enfAsma">Asma</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Otro" id="enfOtro">
+              <label class="form-check-label" for="enfOtro">Otro</label>
+            </div>
+          </div>
+          <input type="text" class="form-control mt-2 d-none" id="otraEnfermedad" name="otraEnfermedad" placeholder="Especifique otra enfermedad">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Dispositivos electrónicos implantados <span class="badge-opt">*Opcional</span></label>
+          <div class="check-grid">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="implantes" value="Stent" id="implStent">
+              <label class="form-check-label" for="implStent">Stent</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="implantes" value="Marcapasos" id="implMarcapasos">
+              <label class="form-check-label" for="implMarcapasos">Marcapasos</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="implantes" value="Otro" id="implOtro">
+              <label class="form-check-label" for="implOtro">Otro</label>
+            </div>
+          </div>
+          <input type="text" class="form-control mt-2 d-none" id="otroImplante" name="otroImplante" placeholder="Especifique otro dispositivo">
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label">Lateralidad <span class="badge-opt">*Opcional</span></label>
+            <div class="d-flex gap-4 mt-1">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="lateralidad" id="latDiestro" value="Diestro" checked>
+                <label class="form-check-label" for="latDiestro">Diestro</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="lateralidad" id="latZurdo" value="Zurdo">
+                <label class="form-check-label" for="latZurdo">Zurdo</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">¿Realizó fisioterapia antes? <span class="badge-opt">*Opcional</span></label>
+            <div class="d-flex gap-4 mt-1">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="fisioPrevia" id="fisioPrevSi" value="Sí">
+                <label class="form-check-label" for="fisioPrevSi">Sí</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="fisioPrevia" id="fisioPrevNo" value="No" checked>
+                <label class="form-check-label" for="fisioPrevNo">No</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Actividad física <span class="badge-opt">*Opcional</span></label>
+            <div class="d-flex flex-wrap gap-3 mt-1">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="actividadFisica" id="actSedentario" value="Sedentario" checked>
+                <label class="form-check-label" for="actSedentario">Sedentario</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="actividadFisica" id="actModerada" value="Moderada">
+                <label class="form-check-label" for="actModerada">Moderada</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="actividadFisica" id="actIntensa" value="Intensa">
+                <label class="form-check-label" for="actIntensa">Intensa</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Fármacos que consume actualmente <span class="badge-opt">*Opcional</span></label>
+          <textarea class="form-control" name="farmacos" id="farmacos" placeholder="Ej: Ibuprofeno 400mg, Enalapril 10mg"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Diagnóstico médico (si lo tiene) <span class="badge-opt">*Opcional</span></label>
+          <textarea class="form-control" name="diagnostico" id="diagnostico"></textarea>
+        </div>
+      </div>
+
+      <!-- ===== SECCIÓN 3: CONSULTA ACTUAL ===== -->
+      <div class="form-section">
+        <div class="section-header">Consulta actual</div>
+
+        <div class="mb-3">
+          <label class="form-label">Motivo de consulta <span class="badge-req">*Obligatorio</span></label>
+          <textarea class="form-control" name="motivo" id="motivo" required></textarea>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Intensidad del dolor — <span id="dolorValor">0</span>/10 <span class="badge-req">*Obligatorio</span></label>
+            <input type="range" class="dolor-slider" name="escalaDolor" id="escalaDolor" min="0" max="10" step="1" value="0">
+            <div class="dolor-labels">
+              <span>0 Sin dolor</span>
+              <span>10 Máximo</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">¿Tiene dolor hace tres meses o más? <span class="badge-req">*Obligatorio</span></label>
+            <select class="form-select" name="dolorCronico" id="dolorCronico">
+              <option value="Sí">Sí</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- === BODY CHART === -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">Body chart <span class="badge-opt">*Opcional</span></label>
+          <p class="text-muted small">Pintá sobre el esquema corporal en las vistas que desees las zonas donde tenés dolor. No es necesario marcar todas las vistas.</p>
+
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <small class="text-muted fw-semibold">
+              <span style="display:inline-block;width:11px;height:11px;background:#0064ff;border-radius:2px;vertical-align:middle;margin-right:3px"></span>Menos dolor
+              &nbsp;
+              <span style="display:inline-block;width:11px;height:11px;background:#7800c8;border-radius:2px;vertical-align:middle;margin-right:3px"></span>Más dolor
+            </small>
+            <div id="colorSelector" class="d-flex gap-3">
+              <div class="color-dot" data-color="blue"></div>
+              <div class="color-dot" data-color="violet"></div>
+            </div>
+          </div>
+
+          <div class="chart-grid" id="chartGrid">
+            <div class="chart-card" data-view="front">
+              <h6>Frente</h6>
+              <canvas class="chart-canvas" id="canvas-front" width="400" height="600"></canvas>
+              <div class="mt-2"><button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="front">Borrar</button></div>
+            </div>
+            <div class="chart-card" data-view="back">
+              <h6>Espalda</h6>
+              <canvas class="chart-canvas" id="canvas-back" width="400" height="600"></canvas>
+              <div class="mt-2"><button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="back">Borrar</button></div>
+            </div>
+            <div class="chart-card" data-view="sideLeft">
+              <h6>Lado izquierdo</h6>
+              <canvas class="chart-canvas" id="canvas-sideLeft" width="400" height="600"></canvas>
+              <div class="mt-2"><button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="sideLeft">Borrar</button></div>
+            </div>
+            <div class="chart-card" data-view="sideRight">
+              <h6>Lado derecho</h6>
+              <canvas class="chart-canvas" id="canvas-sideRight" width="400" height="600"></canvas>
+              <div class="mt-2"><button type="button" class="btn btn-secondary btn-sm btn-clear" data-target="sideRight">Borrar</button></div>
+            </div>
+          </div>
+
+          <div class="mobile-nav d-none" id="mobileNav">
+            <button type="button" class="btn btn-sm" id="prevView">&#8592; Anterior</button>
+            <span id="mobileViewLabel"></span>
+            <button type="button" class="btn btn-sm" id="nextView">Siguiente &#8594;</button>
+          </div>
+        </div>
+        <!-- === FIN BODY CHART === -->
+      </div>
+
+      <input type="hidden" name="bodyChartData" id="bodyChartData">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true">
+
+      <button type="submit" class="btn btn-primary btn-lg w-100 mt-2">Enviar preconsulta</button>
+    </form>
+  </div>
+
+  <!-- scripts -->
+  <script src="index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</body>
+</html>
