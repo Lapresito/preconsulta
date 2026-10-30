@@ -17,7 +17,7 @@ import { DEPARTAMENTOS, MOTIVO_CATEGORIAS, actividadInvalida, ZONAS_CONSULTA, TI
 import { validarFechaNacimiento } from "../lib/edad.js";
 import { errorDocumento } from "../lib/identidad.js";
 import { traductor, idiomaInstalacion } from "../i18n/index.js";
-import { FORM_TYPES, camposDe } from "../config/formTypes.js";
+import { FORM_TYPES, CUSTOMIZABLE_FIELDS } from "../config/formTypes.js";
 import { bloquesDeTipo, extraerBloques, vistaBloques, cuestionariosDeTipo, definicionesCuestionariosDeTipo, vistaTomas } from "../config/bloques.js";
 import { contextoDeFormulario } from "../config/bloquesPretriaje.js";
 import { extraerCuestionarios } from "../config/cuestionarios.js";
@@ -29,11 +29,16 @@ const tp = (clave) => traductor(idiomaInstalacion())(clave);
 // Un solo formulario: la preconsulta general de PMS.
 const FORM_TYPE = "generico";
 
+// Los campos del núcleo que muestra: todos menos el círculo familiar, que repetía lo que ya
+// pregunta el estado civil (pedido del dueño, 2026-10-30). La vista, la validación, el PDF y el
+// mail leen esta misma lista.
+const CAMPOS = CUSTOMIZABLE_FIELDS.map((c) => c.key).filter((k) => k !== "familia");
+
 const router = express.Router();
 
 function renderPreconsulta(req, res) {
   res.render("preconsulta", {
-    fields: camposDe(FORM_TYPE, null),
+    fields: CAMPOS,
     bloques: bloquesDeTipo(FORM_TYPE),
     cuestionarios: definicionesCuestionariosDeTipo(FORM_TYPE),
     motivoPreseleccionado: FORM_TYPES[FORM_TYPE]?.motivoCategoria || null,
@@ -73,7 +78,7 @@ router.post("/api/preconsulta", formLimiter, handleAdjuntos, validateAdjuntos, a
   // Honeypot
   if (data.website) return res.status(200).json({ message: "Formulario recibido." });
 
-  const fields = camposDe(FORM_TYPE, null);
+  const fields = CAMPOS;
 
   const campos = ["nombres","apellidos","ocupacion","residencia","familia","farmacos","diagnostico","motivo","cirugiasPrevias","lesionesPrevias"];
   for (const campo of campos) {
