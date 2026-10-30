@@ -10,13 +10,14 @@
   },
   "dependencies": {
     "dotenv": "^17.2.3",
+    "ejs": "^6.0.1",
     "express": "^5.1.0",
     "express-rate-limit": "^8.5.2",
+    "file-type": "^21.3.4",
     "helmet": "^8.1.0",
     "multer": "^2.0.2",
-    "nodemailer": "^8.0.7",
     "pdfkit": "^0.18.0",
-    "resend": "^6.2.2"
+    "resend": "^6.18.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

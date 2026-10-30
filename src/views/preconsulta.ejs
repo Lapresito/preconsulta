@@ -1,0 +1,727 @@
+<% const show = (key) => !fields || fields.includes(key); %>
+<%# D147 — el formulario de CIERRE (feedback de fin de tratamiento): sin datos personales, con la
+    actividad, el dolor, la PSFS del ingreso y la reflexión final. Con guion bajo porque `esCierre`
+    llega en los datos de la vista y EJS los expone con `with`: redeclararlo daría un error. %>
+<% const _esCierre = typeof esCierre !== "undefined" && esCierre; %>
+<%
+  // Cuando lo carga Felipe a mano ("Nuevo Ingreso") el formulario deja de ser un tramite del
+  // paciente y pasa a ser una pantalla de carga: nada es obligatorio —muchas veces coordina por
+  // telefono y no tiene todos los datos— y no se le pide consentimiento, porque el
+  // consentimiento lo da el paciente, no el fisio en su nombre.
+  const esCarga = typeof nuevoIngreso !== "undefined" && nuevoIngreso;
+  const req = esCarga ? "" : "required";
+  // IDENTIDAD: obligatoria SIEMPRE, tambien en Nuevo Ingreso donde el resto no lo es.
+  //
+  // Nombre, apellido y telefono son con lo que se decide si un paciente ya existe. Sin telefono
+  // no hay identificador: dos pacientes distintos sin numero se fusionaban en uno solo (bug A,
+  // medido — ver TODO.md). Si el paciente no tiene numero, Felipe pone el que sirva para
+  // contactarlo; lo que no puede es quedar vacio.
+  const reqId = "required";
+  // La fecha de nacimiento mas RECIENTE aceptada: hoy menos 6 anios. Felipe no atiende ninios,
+  // y sin esto el campo tomaba fechas futuras (edad negativa) que despues rompian el rango
+  // etario. El limite inferior corta en 120 anios por lo mismo: descartar tipeos.
+  const _hoy = new Date();
+  const maxNacimiento = new Date(_hoy.getFullYear() - 6, _hoy.getMonth(), _hoy.getDate()).toISOString().slice(0, 10);
+  const minNacimiento = new Date(_hoy.getFullYear() - 120, _hoy.getMonth(), _hoy.getDate()).toISOString().slice(0, 10);
+
+  // ESTE MISMO FORMULARIO se usa en tres situaciones distintas, y solo cambia el encabezado:
+  //   · preconsulta         — el ingreso, lo llena el paciente por un link.
+  //   · formulario intermedio — el mismo formulario en medio de un tratamiento, para comparar
+  //                             contra el ingreso y medir avance (migración 0021). Lo arma
+  //                             `encabezadoDe()` en src/routes/preconsulta.js.
+  //   · nuevo ingreso       — lo carga Felipe a mano en el panel.
+  // Duplicar la vista para cambiar un título sería garantizar que se desincronicen.
+  const _enc = typeof encabezado !== "undefined" && encabezado ? encabezado : null;
+  const tituloPagina = esCarga ? "Nuevo ingreso" : (_enc?.titulo || "Preconsulta");
+  const subtituloPagina = esCarga
+    ? "Carga manual: solo la identidad es obligatoria, el resto se completa cuando lo tengas."
+    : (_enc?.subtitulo || null);
+%>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><%= tituloPagina %></title>
+  <link href="/vendor/bootstrap.min.css" rel="stylesheet">
+  <link href="/styles.css" rel="stylesheet">
+</head>
+
+<body class="bg-custom">
+
+  <% if (esCarga) { %>
+    <%# Esta pantalla la abre Felipe DESDE el panel — es la única de las tres variantes de este
+        formulario que no la ve un paciente. Sin este link no había forma de volver salvo tocar
+        la URL a mano: la vista es compartida con la preconsulta pública (línea 29) y esa no
+        lleva ningún nav de admin. %>
+    <div class="bg-header py-2 px-3">
+      <a href="/admin/pacientes" class="btn-back text-white"><%= t('pre.volverPanel') %></a>
+    </div>
+  <% } else { %>
+    <header class="text-center py-4 bg-header shadow-sm">
+      <h1 class="mb-0 text-white fw-bold"><%= t('pre.marca') %></h1>
+    </header>
+  <% } %>
+
+  <div class="container py-4">
+    <h1 class="text-center mb-2"><%= tituloPagina %></h1>
+    <% if (subtituloPagina) { %>
+      <p class="text-center text-muted mb-4"><%= subtituloPagina %></p>
+    <% } %>
+
+    <%# Pantalla de finalizado (D109). Las otras dos pantallas públicas —la reserva y el feedback—
+        reemplazan el formulario por un panel al terminar; esta hacía `form.reset()` y dejaba al
+        paciente mirando el formulario vacío, que se lee como "no se envió" y lleva a mandarlo dos
+        veces. El SweetAlert queda: avisa, pero se va solo a los 2,5 segundos.
+        No aplica a Nuevo Ingreso, que redirige a la historia clínica. %>
+    <% if (!esCarga) { %>
+      <%# La copia es de acá y no del mensaje del server: ese texto ya lo dice el SweetAlert, y
+          repetirlo dejaba dos tildes verdes y la misma frase dos veces en la misma pantalla. %>
+      <div id="preconsultaOk" class="bg-white p-4 rounded shadow text-center d-none">
+        <h2 class="h4 mb-3"><%= t('pre.enviadoTitulo') %></h2>
+        <p class="mb-3"><%= t('pre.enviadoTexto') %></p>
+        <p class="text-muted mb-0"><%= t('pre.enviadoCerrar') %></p>
+        <%# D141 — el aviso del pretriage al PACIENTE. Lo muestra public/index.js cuando la regla da
+            emergencia o urgente, y es EL MISMO para los dos niveles, a propósito (pedido del dueño):
+            NUNCA le dice que vaya a emergencia. El formulario puede leer mal —un paciente que marca
+            "dificultad para orinar" porque siempre la tuvo—, y mandar a alguien a una guardia por un
+            error del formulario del fisio sería un daño real. Lo que hace es pedirle que se
+            comunique pronto con Felipe, que es quien puede preguntar y decidir. El que ve el nivel
+            real es Felipe, en la ficha. %>
+        <div id="pretriajeAviso" class="alert alert-info mt-3 mb-0 d-none pretriaje-aviso" role="status">
+          <div class="fw-semibold mb-1"><%= t('pre.avisoPretriajeTitulo') %></div>
+          <div><%= t('pre.avisoPretriaje', { telefono: contactoTelefono }) %></div>
+          <a class="btn btn-sm btn-primary mt-2" href="tel:<%= contactoTelefonoTel %>"><%= t('pre.avisoLlamar', { telefono: contactoTelefono }) %></a>
+        </div>
+      </div>
+    <% } %>
+
+    <form id="preConsultaForm" class="bg-white p-4 rounded shadow" autocomplete="off" enctype="multipart/form-data"
+          data-endpoint="<%= typeof endpoint !== "undefined" ? endpoint : "/api/preconsulta" %>"
+          <%# D127 — public/index.js es un archivo estático y no puede llamar a t(): sus rótulos
+              viajan acá, ya traducidos, igual que los del body chart del panel. %>
+          data-textos='<%- JSON.stringify({
+            front: t("vista.frente"), back: t("vista.espalda"),
+            sideLeft: t("vista.ladoIzquierdo"), sideRight: t("vista.ladoDerecho"),
+            demasiadosArchivos: t("pre.demasiadosArchivos"), hastaTresArchivos: t("pre.hastaTresArchivos"),
+            enviandoFormulario: t("pre.enviandoFormulario"), esperaMomento: t("pre.esperaMomento"),
+            yaExisteTitulo: t("pre.yaExisteTitulo"), verFicha: t("pre.verFicha"),
+            coincide: t("consultas.coincide"), difiere: t("consultas.difiere"),
+            esEstePaciente: t("pre.esEstePaciente"), esUnoNuevo: t("pre.esUnoNuevo"),
+            cancelar: t("comun.cancelar"),
+            enviadoTitulo: t("pre.enviadoTitulo"), graciasEnviada: t("pre.graciasEnviada"),
+            errorEnviarTitulo: t("pre.errorEnviarTitulo"), errorEnviar: t("post.errorEnviar"),
+            errorConexionTitulo: t("pre.errorConexionTitulo"), errorConexion: t("comun.errorServidor"),
+            faltaResponder: t("pre.faltaResponder"),
+          }) %>'>
+
+      <%# D137 — en la carga manual, Felipe elige qué formulario carga. Cambiarlo recarga la página:
+          no es un campo más, cambia qué se pregunta. Por eso va arriba de todo, antes de escribir nada. %>
+      <% if (esCarga && typeof tiposIngreso !== 'undefined') { %>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+          <span class="small text-muted"><%= t('pre.tipoIngreso') %></span>
+          <% tiposIngreso.forEach((ti) => { %>
+            <a href="?tipo=<%= ti.key %>" class="btn btn-sm <%= ti.key === formTypeActual ? 'btn-primary' : 'btn-outline-primary' %>"><%= ti.label %></a>
+          <% }) %>
+        </div>
+        <input type="hidden" name="formType" value="<%= formTypeActual %>">
+      <% } %>
+
+      <%# D147 — el cierre no vuelve a pedir datos personales: ya se sabe quién es (el episodio). %>
+      <% if (!_esCierre) { %>
+      <!-- ===== SECCIÓN 1: DATOS PERSONALES ===== -->
+      <div class="form-section">
+        <div class="section-header"><%= t('pre.datosPersonales') %></div>
+
+        <div class="row mb-3">
+          <% if (show('nombres')) { %>
+          <div class="col-md-6">
+            <label class="form-label"><%= t('pre.nombres') %> <span class="badge-req"><%= t('pre.obligatorio') %></span></label>
+            <input type="text" class="form-control" name="nombres" id="nombres" value="<%= (typeof prefill !== 'undefined' && prefill?.nombres) || '' %>" <%- reqId %>>
+          </div>
+          <% } %>
+          <% if (show('apellidos')) { %>
+          <div class="col-md-6">
+            <label class="form-label"><%= t('pre.apellidos') %> <span class="badge-req"><%= t('pre.obligatorio') %></span></label>
+            <input type="text" class="form-control" name="apellidos" id="apellidos" value="<%= (typeof prefill !== 'undefined' && prefill?.apellidos) || '' %>" <%- reqId %>>
+          </div>
+          <% } %>
+        </div>
+
+        <%# D148 — el documento es lo que distingue a un paciente de otro. Va donde va el nombre: un
+            formulario que pregunta la identidad lo pregunta (el cierre no). Obligatorio para el
+            paciente; opcional en la carga manual, porque Felipe puede no tenerlo a mano y lo completa
+            después desde la ficha. La CI se valida con su dígito verificador en el servidor. %>
+        <% if (show('nombres')) { %>
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label class="form-label" for="documentoTipo"><%= t('pre.documentoTipo') %></label>
+            <select class="form-select" name="documentoTipo" id="documentoTipo">
+              <% ['ci', 'pasaporte', 'otro'].forEach((tipo) => { %>
+                <option value="<%= tipo %>" <%= ((typeof prefill !== 'undefined' && prefill?.documentoTipo) || 'ci') === tipo ? 'selected' : '' %>><%= t('pre.documentoTipo.' + tipo) %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label" for="documento"><%= t('pre.documento') %> <span class="<%= esCarga ? 'badge-opt' : 'badge-req' %>"><%= esCarga ? t('pre.opcional') : t('pre.obligatorio') %></span></label>
+            <input type="text" class="form-control" name="documento" id="documento" maxlength="30" autocomplete="off"
+                   value="<%= (typeof prefill !== 'undefined' && prefill?.documento) || '' %>" placeholder="<%= t('pre.documentoPlaceholder') %>" <%- req %>>
+            <small class="text-muted"><%= t('pre.documentoAyuda') %></small>
+          </div>
+        </div>
+        <% } %>
+
+        <div class="row mb-3">
+          <% if (show('fechaNacimiento')) { %>
+          <div class="col-md-6">
+            <label class="form-label"><%= t('pre.fechaNacimiento') %> <% if (!esCarga) { %><span class="badge-req"><%= t('pre.obligatorio') %></span><% } %></label>
+            <input type="date" class="form-control" name="fechaNacimiento" id="fechaNacimiento" value="2000-01-01" min="<%= minNacimiento %>" max="<%= maxNacimiento %>" <%- req %>>
+            <small class="text-muted" id="edad"></small>
+          </div>
+          <% } %>
+          <div class="col-md-6">
+            <label class="form-label"><%= t('pre.genero') %> <% if (!esCarga) { %><span class="badge-req"><%= t('pre.obligatorio') %></span><% } %></label>
+            <div class="d-flex gap-4 mt-1">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="genero" id="generoHombre" value="hombre" checked>
+                <label class="form-check-label" for="generoHombre"><%= t('dash.hombre') %></label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="genero" id="generoMujer" value="mujer">
+                <label class="form-check-label" for="generoMujer"><%= t('dash.mujer') %></label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="genero" id="generoOtro" value="otro">
+                <label class="form-check-label" for="generoOtro"><%= t('dash.otro') %></label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <% if (show('telefono')) { %>
+          <div class="col-md-6">
+            <label class="form-label"><%= t('pre.telefono') %> <span class="badge-req"><%= t('pre.obligatorio') %></span></label>
+            <input
+              type="tel"
+              class="form-control"
+              name="telefono"
+              id="telefono"
+              pattern="[0-9]{6,15}"
+              inputmode="numeric"
+              placeholder="<%= t('pre.telefonoPlaceholder') %>"
+              <%- reqId %>
+            >
+            <small class="text-muted">
+              <%= t('pre.soloNumeros') %>
+              <% if (esCarga) { %><%= t('pre.telefonoIdentifica') %><% } %>
+            </small>
+          </div>
+          <% } %>
+          <div class="col-md-6">
+            <label class="form-label"><%= t('pre.email') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+            <input type="email" class="form-control" name="email" id="email" value="<%= (typeof prefill !== 'undefined' && prefill?.email) || '' %>" placeholder="<%= t('pre.emailPlaceholder') %>">
+          </div>
+        </div>
+
+        <% if (show('ocupacion')) { %>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.ocupacion') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <input type="text" class="form-control" name="ocupacion" id="ocupacion">
+        </div>
+        <% } %>
+
+        <% if (show('residencia')) { %>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.residencia') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <input type="text" class="form-control" name="residencia" id="residencia" placeholder="<%= t('pre.residenciaPlaceholder') %>">
+        </div>
+        <% } %>
+
+        <div class="mb-3">
+          <%# Dejó de ser obligatorio (pedido del dueño, 31/8): no cambia nada de lo clínico y era
+              una barrera más en un formulario que el paciente llena solo, sin nadie que le
+              explique. Sirve para decidir cada cuánto citarlo, y eso se puede completar después
+              desde la ficha. Sin `req` y con la opción vacía elegible. %>
+          <label class="form-label"><%= t('pre.departamento') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <select class="form-select" name="departamento" id="departamento">
+            <option value="" selected><%= t('pre.elegiDepartamento') %></option>
+            <% departamentos.forEach((d) => { %>
+              <option value="<%= d %>"><%= d %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <% if (show('familia')) { %>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.familia') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <textarea class="form-control" name="familia" id="familia"></textarea>
+        </div>
+        <% } %>
+
+        <%# D140/D146 — estado civil y nivel educativo, ADENTRO de los datos personales y opcionales. %>
+        <%- include('partials/bloques-formulario', { bloques: typeof bloques !== 'undefined' ? bloques : [], esCarga, lugar: 'identidad' }) %>
+      </div>
+      <% } %>
+
+      <!-- ===== SECCIÓN 2: HISTORIAL MÉDICO ===== -->
+      <div class="form-section">
+        <div class="section-header"><%= _esCierre ? t('cierre.seccionActividad') : t('pre.historial') %></div>
+
+        <% if (show('enfermedades')) { %>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.enfermedades') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <div class="check-grid">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Diabetes" id="enfDiabetes">
+              <label class="form-check-label" for="enfDiabetes"><%= t("cat.enfermedad.diabetes") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Hipertensión" id="enfHipertension">
+              <label class="form-check-label" for="enfHipertension"><%= t("cat.enfermedad.hipertension") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Asma" id="enfAsma">
+              <label class="form-check-label" for="enfAsma"><%= t("cat.enfermedad.asma") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="EPOC" id="enfEpoc">
+              <label class="form-check-label" for="enfEpoc"><%= t("cat.enfermedad.epoc") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Obesidad" id="enfObesidad">
+              <label class="form-check-label" for="enfObesidad"><%= t("cat.enfermedad.obesidad") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Dislipemia" id="enfDislipemia">
+              <label class="form-check-label" for="enfDislipemia"><%= t("cat.enfermedad.dislipemia") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Enfermedad cardiovascular" id="enfCardiovascular">
+              <label class="form-check-label" for="enfCardiovascular"><%= t("cat.enfermedad.cardiovascular") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Epilepsia" id="enfEpilepsia">
+              <label class="form-check-label" for="enfEpilepsia"><%= t("cat.enfermedad.epilepsia") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Ansiedad" id="enfAnsiedad">
+              <label class="form-check-label" for="enfAnsiedad"><%= t("cat.enfermedad.ansiedad") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Depresión" id="enfDepresion">
+              <label class="form-check-label" for="enfDepresion"><%= t("cat.enfermedad.depresion") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Hipotiroidismo" id="enfHipotiroidismo">
+              <label class="form-check-label" for="enfHipotiroidismo"><%= t("cat.enfermedad.hipotiroidismo") %></label>
+            </div>
+            <%# D141 — cáncer: la bandera roja con más peso del triage. Al marcarlo se abre qué tipo.
+                El `value` en español es el formato de cable, igual que el resto de la lista. %>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Cáncer" id="enfCancer">
+              <label class="form-check-label" for="enfCancer"><%= t("cat.enfermedad.cancer") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="enfermedades" value="Otro" id="enfOtro">
+              <label class="form-check-label" for="enfOtro"><%= t("cat.enfermedad.otro") %></label>
+            </div>
+          </div>
+          <div class="mt-2 ps-3 border-start border-3 d-none" id="cancerDetalle">
+            <div class="form-label small mb-1" id="cancerRotulo"><%= t('pre.cancerTipo') %></div>
+            <div class="d-flex flex-wrap gap-2" role="group" aria-labelledby="cancerRotulo">
+              <% tiposCancer.forEach((c) => { %>
+                <input type="checkbox" class="btn-check" name="cancerTipos" id="cancer_<%= c.key %>" value="<%= c.key %>" autocomplete="off">
+                <label class="btn btn-outline-secondary btn-sm" for="cancer_<%= c.key %>"><%= c.label %></label>
+              <% }) %>
+            </div>
+            <input type="text" class="form-control mt-2 d-none" id="otroCancer" name="otroCancer" maxlength="100" placeholder="<%= t('pre.otroCancer') %>">
+          </div>
+          <input type="text" class="form-control mt-2 d-none" id="otraEnfermedad" name="otraEnfermedad" placeholder="<%= t('pre.otraEnfermedad') %>">
+        </div>
+        <% } %>
+
+        <% if (show('implantes')) { %>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.implantes') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <div class="check-grid">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="implantes" value="Stent" id="implStent">
+              <label class="form-check-label" for="implStent"><%= t("cat.implante.stent") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="implantes" value="Marcapasos" id="implMarcapasos">
+              <label class="form-check-label" for="implMarcapasos"><%= t("cat.implante.marcapasos") %></label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="implantes" value="Otro" id="implOtro">
+              <label class="form-check-label" for="implOtro"><%= t("cat.implante.otro") %></label>
+            </div>
+          </div>
+          <input type="text" class="form-control mt-2 d-none" id="otroImplante" name="otroImplante" placeholder="<%= t('pre.otroImplante') %>">
+        </div>
+        <% } %>
+
+        <%# D135 · criba #2: texto libre y no lista cerrada, por decisión de Felipe — una lista de
+            cirugías posibles sería larguísima y el paciente igual escribiría al lado. %>
+        <div class="row mb-3">
+          <% if (show('cirugias')) { %>
+          <div class="col-md-6">
+            <label class="form-label" for="cirugiasPrevias"><%= t('pre.cirugias') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+            <textarea class="form-control" name="cirugiasPrevias" id="cirugiasPrevias" rows="2" placeholder="<%= t('pre.cirugiasPlaceholder') %>"></textarea>
+          </div>
+          <% } %>
+          <% if (show('lesiones')) { %>
+          <div class="col-md-6">
+            <label class="form-label" for="lesionesPrevias"><%= t('pre.lesiones') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+            <textarea class="form-control" name="lesionesPrevias" id="lesionesPrevias" rows="2" placeholder="<%= t('pre.lesionesPlaceholder') %>"></textarea>
+          </div>
+          <% } %>
+        </div>
+
+        <%# D154 — fármacos y diagnóstico van pegados a las intervenciones (pedido del dueño): son
+            historia médica. Lo que sigue —fisioterapia previa, actividad física, hábitos— es estilo de vida. %>
+        <% if (show('farmacos')) { %>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.farmacos') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <textarea class="form-control" name="farmacos" id="farmacos" placeholder="<%= t('pre.farmacosPlaceholder') %>"></textarea>
+        </div>
+        <% } %>
+
+        <% if (show('diagnostico')) { %>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.diagnostico') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <textarea class="form-control" name="diagnostico" id="diagnostico"></textarea>
+        </div>
+        <% } %>
+
+        <%# Sin show() propio: se dibujaba en todos los formularios. El cierre no la pregunta (pedido
+            del dueño, D147): la fisioterapia previa es un dato del ingreso. %>
+        <% if (!_esCierre) { %>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label class="form-label"><%= t('pre.fisioPrevia') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+            <div class="d-flex gap-4 mt-1">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="fisioPrevia" id="fisioPrevSi" value="Sí">
+                <label class="form-check-label" for="fisioPrevSi"><%= t('comun.si') %></label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="fisioPrevia" id="fisioPrevNo" value="No" checked>
+                <label class="form-check-label" for="fisioPrevNo"><%= t('comun.no') %></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <%# D135 · criba #17: nivel, frecuencia y actividades, con botones — "botones de
+            seleccionar" fue la indicación de Felipe. Los rangos de días son los mismos del
+            formulario vestibular, para poder comparar los dos.
+
+            SIN opción marcada por defecto, a propósito. Antes "Sedentario" venía tildado, así que
+            un paciente que salteaba la pregunta quedaba registrado como sedentario: una respuesta
+            que nunca dio, en un dato que después se agrupa en el dashboard. %>
+        <% if (show('actividad')) { %>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.actividadFisica') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <div class="d-flex flex-wrap gap-2 mt-1">
+            <% ['sedentario', 'episodico', 'saludable'].forEach((k) => { %>
+              <input type="radio" class="btn-check" name="actividadFisica" id="act_<%= k %>" value="<%= k %>" autocomplete="off">
+              <label class="btn btn-outline-primary btn-sm" for="act_<%= k %>"><%= t('cat.nivelActividad.' + k) %></label>
+            <% }) %>
+          </div>
+          <p class="form-text mb-2"><%= t('pre.actividadAyuda') %></p>
+
+          <label class="form-label small mb-1"><%= t('pre.actividadFrecuencia') %></label>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <% ['0', '1_2', '3_4', '5_7'].forEach((k) => { %>
+              <input type="radio" class="btn-check" name="actividadFrecuencia" id="actFrec_<%= k %>" value="<%= k %>" autocomplete="off">
+              <label class="btn btn-outline-primary btn-sm" for="actFrec_<%= k %>"><%= t('cat.frecActividad.' + k) %></label>
+            <% }) %>
+          </div>
+
+          <label class="form-label small mb-1"><%= t('pre.actividadCuales') %></label>
+          <div class="d-flex flex-wrap gap-2">
+            <% ['caminar', 'correr', 'bicicleta', 'natacion', 'gimnasio', 'yoga_pilates', 'futbol', 'deporte_equipo', 'baile', 'otro'].forEach((k) => { %>
+              <input type="checkbox" class="btn-check" name="actividades" id="actTipo_<%= k %>" value="<%= k %>" autocomplete="off">
+              <label class="btn btn-outline-secondary btn-sm" for="actTipo_<%= k %>"><%= t('cat.tipoActividad.' + k) %></label>
+            <% }) %>
+          </div>
+          <%# D141 — "Otra" abre dónde escribir cuál (mismo patrón que "Otra enfermedad"). %>
+          <input type="text" class="form-control mt-2 d-none" id="otraActividad" name="otraActividad" maxlength="100" placeholder="<%= t('pre.otraActividad') %>">
+        </div>
+        <% } %>
+
+        <%# D147 — las preguntas del cierre que van pegadas a la actividad física (mejoría en esas
+            actividades, cambios en los fármacos). Sin sección propia: son `integrado`. %>
+        <%- include('partials/bloques-formulario', { bloques: typeof bloques !== 'undefined' ? bloques : [], esCarga, lugar: 'actividad' }) %>
+
+      </div>
+
+      <!-- ===== SECCIÓN 3: CONSULTA ACTUAL ===== -->
+      <div class="form-section">
+        <div class="section-header"><%= _esCierre ? t('cierre.seccionDolor') : t('pre.consultaActual') %></div>
+
+        <% if (show('motivo')) { %>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.motivo') %> <% if (!esCarga) { %><span class="badge-req"><%= t('pre.obligatorio') %></span><% } %></label>
+          <textarea class="form-control" name="motivo" id="motivo" <%- req %>></textarea>
+        </div>
+        <%# D141 — el paciente ya no elige una CATEGORÍA de motivo: marca DÓNDE le duele. La lista
+            de categorías mezclaba zonas con cosas que no sabe clasificar ("neurológico",
+            "post-quirúrgico"), y lo que el pretriage necesita es la zona, para saber qué preguntar.
+            La categoría se sugiere sola a partir de la zona (motivoDeZonas) y la fija Felipe al
+            confirmar.
+
+            Un formulario que ya trae su motivo (el vestibular) no pregunta zonas: lo manda oculto.
+            La carga manual sí muestra las zonas —el pretriage las necesita igual— y ADEMÁS el
+            selector de categoría, porque ahí el que carga es Felipe y el episodio se abre con ella. %>
+        <% const _motivoFijo = typeof motivoPreseleccionado !== 'undefined' && motivoPreseleccionado ? motivoPreseleccionado : null; %>
+        <% if (_motivoFijo && !esCarga) { %>
+          <input type="hidden" name="motivoCategoria" value="<%= _motivoFijo %>">
+        <% } else { %>
+        <div class="mb-3">
+          <div class="form-label" id="zonasRotulo"><%= t('pre.zonas') %> <% if (!esCarga) { %><span class="badge-req"><%= t('pre.obligatorio') %></span><% } %></div>
+          <div class="d-flex flex-wrap gap-2" role="group" aria-labelledby="zonasRotulo" id="zonasConsulta" <%- esCarga ? '' : 'data-requerido="1"' %>>
+            <% zonasConsulta.forEach((z) => { %>
+              <input type="checkbox" class="btn-check" name="zonasConsulta" id="zona_<%= z.key %>" value="<%= z.key %>" autocomplete="off">
+              <label class="btn btn-outline-primary btn-sm" for="zona_<%= z.key %>"><%= z.label %></label>
+            <% }) %>
+          </div>
+          <input type="text" class="form-control mt-2 d-none" id="otraZona" name="otraZona" maxlength="100" placeholder="<%= t('pre.otraZona') %>">
+          <small class="text-muted"><%= t('pre.zonasAyuda') %></small>
+        </div>
+        <% } %>
+        <% if (esCarga) { %>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.categoria') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <select class="form-select" name="motivoCategoria" id="motivoCategoria">
+            <option value=""><%= t('pre.noSe') %></option>
+            <% motivoCategorias.forEach((m) => { %>
+              <option value="<%= m.key %>" <%= _motivoFijo === m.key ? 'selected' : '' %>><%= m.label %></option>
+            <% }) %>
+          </select>
+          <small class="text-muted"><%= t('pre.categoriaAyuda') %></small>
+        </div>
+        <% } %>
+        <% } %>
+
+        <div class="row mb-3">
+          <% if (show('escalaDolor')) { %>
+          <div class="col-md-6">
+            <label class="form-label"><%= t('pre.intensidadDolor') %> — <span id="dolorValor">0</span>/10 <% if (!esCarga) { %><span class="badge-req"><%= t('pre.obligatorio') %></span><% } %></label>
+            <input type="range" class="dolor-slider" name="escalaDolor" id="escalaDolor" min="0" max="10" step="1" value="0">
+            <div class="dolor-labels">
+              <span><%= t('pre.sinDolor') %></span>
+              <span><%= t('pre.maximo') %></span>
+            </div>
+          </div>
+          <% } %>
+          <% if (show('dolorCronico')) { %>
+          <div class="col-md-6">
+            <label class="form-label"><%= t('pre.dolorCronico') %> <% if (!esCarga) { %><span class="badge-req"><%= t('pre.obligatorio') %></span><% } %></label>
+            <%# Sin la opción vacía, el navegador seleccionaba "Sí" solo y el paciente mandaba un
+                dolor crónico que nunca dijo tener — y ese dato define la temporalidad del
+                episodio, que es lo que habilita evaluar el mecanismo nociplástico. Mismo patrón
+                que `departamento` acá arriba. %>
+            <select class="form-select" name="dolorCronico" id="dolorCronico" <%- req %>>
+              <%# ⚠️ Los `value` quedan en español a propósito: son el FORMATO DE CABLE que el
+                  server ya guarda ("Sí"/"No"), no lo que se ve. Traducirlos rompería el parseo
+                  y dejaría el dolor crónico sin registrar. Lo traducido es el texto visible. %>
+              <option value="" disabled selected><%= t('pre.elegiOpcion') %></option>
+              <option value="Sí"><%= t('comun.si') %></option>
+              <option value="No"><%= t('comun.no') %></option>
+            </select>
+          </div>
+          <% } %>
+        </div>
+
+        <% if (show('bodyChart')) { %>
+        <!-- === BODY CHART === -->
+        <div class="mb-3">
+          <label class="form-label fw-bold"><%= t('pre.bodyChart') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <p class="text-muted small"><%= t('pre.bodyChartAyuda') %></p>
+          <%# D147 — el cierre no tiene la sección de datos personales, que es donde se elige el sexo
+              que decide la silueta. Se pregunta acá, solo para dibujar: no se guarda como dato. %>
+          <% if (_esCierre) { %>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2" role="radiogroup" aria-label="<%= t('cierre.silueta') %>">
+              <span class="small text-muted"><%= t('cierre.silueta') %></span>
+              <input type="radio" class="btn-check" name="genero" id="siluetaHombre" value="hombre" autocomplete="off" checked>
+              <label class="btn btn-outline-secondary btn-sm" for="siluetaHombre"><%= t('cierre.siluetaHombre') %></label>
+              <input type="radio" class="btn-check" name="genero" id="siluetaMujer" value="mujer" autocomplete="off">
+              <label class="btn btn-outline-secondary btn-sm" for="siluetaMujer"><%= t('cierre.siluetaMujer') %></label>
+            </div>
+          <% } %>
+
+          <div class="chart-toolbar d-flex align-items-center gap-3 mb-2 flex-wrap">
+            <small class="text-muted fw-semibold d-flex flex-column gap-1">
+              <span><span style="display:inline-block;width:11px;height:11px;background:#0064ff;border-radius:2px;vertical-align:middle;margin-right:3px"></span><%= t('pre.menosDolor') %></span>
+              <span><span style="display:inline-block;width:11px;height:11px;background:#7800c8;border-radius:2px;vertical-align:middle;margin-right:3px"></span><%= t('pre.masDolor') %></span>
+            </small>
+            <div id="colorSelector" class="d-flex gap-2 align-items-center">
+              <div class="color-dot selected" data-tool="paint" data-color="blue" title="<%= t('pre.pintarAzul') %>"></div>
+              <div class="color-dot" data-tool="paint" data-color="violet" title="<%= t('pre.pintarVioleta') %>"></div>
+              <div class="d-flex align-items-center gap-1">
+                <div class="color-dot eraser-dot" id="eraserTool" data-tool="erase" title="<%= t('pre.gomaTitle') %>"></div>
+                <small class="text-muted eraser-label"><%= t('pre.goma') %></small>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomOut" title="<%= t('pre.alejar') %>">&minus;</button>
+              <span id="zoomLevel" class="text-muted small text-center" style="min-width:3.2em">100%</span>
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomIn" title="<%= t('pre.acercar') %>">+</button>
+            </div>
+            <div class="position-relative">
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="moveTool" title="<%= t('pre.moverTitle') %>"><%= t('pre.mover') %></button>
+              <div id="moveToast" class="move-toast d-none"><%= t('pre.moverToast') %></div>
+            </div>
+          </div>
+
+          <small class="text-muted d-none mb-2 d-block" id="zoomHint">
+            <%= t('pre.zoomHint') %>
+          </small>
+
+          <%# Las cuatro vistas siguen SIEMPRE en el DOM —se pintan y se serializan igual— pero en
+              desktop se muestran de a dos: cada par (frente/espalda y derecho/izquierdo) ocupa un
+              lugar y se alterna con el boton de arriba. Antes entraban las cuatro y quedaban una
+              abajo de la otra. En mobile manda el nav de abajo, que ya recorria de a una. %>
+          <div class="chart-grid" id="chartGrid">
+            <div class="chart-card" data-view="front" data-par="A">
+              <h6><%= t('vista.frente') %></h6>
+              <button type="button" class="btn btn-sm btn-outline-secondary chart-swap" data-swap-to="back"><%= t('pre.cambiarAEspalda') %></button>
+              <div class="chart-viewport" id="viewport-front">
+                <div class="chart-canvas-wrap" id="wrap-front">
+                  <canvas class="chart-canvas-bg" id="canvas-front-bg" width="400" height="600"></canvas>
+                  <canvas class="chart-canvas-paint" id="canvas-front" width="400" height="600"></canvas>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-danger chart-clear mt-2" data-view="front"><%= t('pre.borrarTodo') %></button>
+            </div>
+            <div class="chart-card" data-view="back" data-par="A">
+              <h6><%= t('vista.espalda') %></h6>
+              <button type="button" class="btn btn-sm btn-outline-secondary chart-swap" data-swap-to="front"><%= t('pre.cambiarAFrente') %></button>
+              <div class="chart-viewport" id="viewport-back">
+                <div class="chart-canvas-wrap" id="wrap-back">
+                  <canvas class="chart-canvas-bg" id="canvas-back-bg" width="400" height="600"></canvas>
+                  <canvas class="chart-canvas-paint" id="canvas-back" width="400" height="600"></canvas>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-danger chart-clear mt-2" data-view="back"><%= t('pre.borrarTodo') %></button>
+            </div>
+            <div class="chart-card" data-view="sideRight" data-par="B">
+              <h6><%= t('vista.ladoDerecho') %></h6>
+              <button type="button" class="btn btn-sm btn-outline-secondary chart-swap" data-swap-to="sideLeft"><%= t('pre.cambiarAIzquierdo') %></button>
+              <div class="chart-viewport" id="viewport-sideRight">
+                <div class="chart-canvas-wrap" id="wrap-sideRight">
+                  <canvas class="chart-canvas-bg" id="canvas-sideRight-bg" width="400" height="600"></canvas>
+                  <canvas class="chart-canvas-paint" id="canvas-sideRight" width="400" height="600"></canvas>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-danger chart-clear mt-2" data-view="sideRight"><%= t('pre.borrarTodo') %></button>
+            </div>
+            <div class="chart-card" data-view="sideLeft" data-par="B">
+              <h6><%= t('vista.ladoIzquierdo') %></h6>
+              <button type="button" class="btn btn-sm btn-outline-secondary chart-swap" data-swap-to="sideRight"><%= t('pre.cambiarADerecho') %></button>
+              <div class="chart-viewport" id="viewport-sideLeft">
+                <div class="chart-canvas-wrap" id="wrap-sideLeft">
+                  <canvas class="chart-canvas-bg" id="canvas-sideLeft-bg" width="400" height="600"></canvas>
+                  <canvas class="chart-canvas-paint" id="canvas-sideLeft" width="400" height="600"></canvas>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-danger chart-clear mt-2" data-view="sideLeft"><%= t('pre.borrarTodo') %></button>
+            </div>
+          </div>
+
+          <div class="mobile-nav d-none" id="mobileNav">
+            <button type="button" class="btn btn-sm" id="prevView">&#8592; <%= t('pre.anterior') %></button>
+            <span id="mobileViewLabel"></span>
+            <button type="button" class="btn btn-sm" id="nextView"><%= t('pre.siguiente') %> &#8594;</button>
+          </div>
+
+          <div id="eraserIndicator" class="eraser-indicator"></div>
+        </div>
+        <!-- === FIN BODY CHART === -->
+        <% } %>
+      </div>
+
+      <%# D147 — la PSFS del cierre, con las actividades que el paciente escribió al ingresar. %>
+      <% if (_esCierre && typeof psfsCierre !== 'undefined' && psfsCierre) { %>
+        <%- include('partials/psfs-cierre', { psfsCierre }) %>
+      <% } %>
+
+      <%# D136 — los bloques variables del tipo de formulario (painDETECT, vestibular...). Van después
+          de la consulta actual porque varios dependen de lo que se contestó ahí. %>
+      <%- include('partials/bloques-formulario', { bloques: typeof bloques !== 'undefined' ? bloques : [], esCarga, lugar: 'cuerpo' }) %>
+
+      <%# D140 — los cuestionarios validados que el tipo de formulario trae adentro (la batería de
+          la preconsulta vestibular), y después lo que cierra el formulario (el comentario final). %>
+      <%- include('partials/cuestionarios-formulario', { cuestionarios: typeof cuestionarios !== 'undefined' ? cuestionarios : [], esCarga }) %>
+      <%- include('partials/bloques-formulario', { bloques: typeof bloques !== 'undefined' ? bloques : [], esCarga, lugar: 'cierre' }) %>
+
+      <% if (show('adjuntos')) { %>
+      <div class="form-section">
+        <div class="section-header"><%= t('pre.documentacion') %></div>
+        <div class="mb-3">
+          <label class="form-label"><%= t('pre.adjuntosLabel') %> <span class="badge-opt"><%= t('pre.opcional') %></span></label>
+          <input type="file" class="form-control" name="adjuntos" id="adjuntos" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" multiple>
+          <small class="text-muted"><%= t('pre.adjuntosAyuda') %></small>
+        </div>
+      </div>
+      <% } %>
+
+      <%# El consentimiento lo da el PACIENTE, no Felipe en su nombre: pedirselo a el en la carga
+          manual seria registrar una aceptacion que nadie hizo. Por eso el bloque no se muestra en
+          Nuevo Ingreso. Ver la nota de TODO.md sobre como queda el registro en ese caso. %>
+      <% if (!esCarga) { %>
+      <div class="form-section">
+        <div class="mb-2 small text-muted" style="max-height: 8em; overflow-y: auto;"><%= textoConsentimiento %></div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="consentimiento" value="acepto" id="consentimiento" <%- req %>>
+          <label class="form-check-label" for="consentimiento">
+            <%= t('pre.aceptoConsentimiento') %> <span class="badge-req"><%= t('pre.obligatorio') %></span>
+          </label>
+        </div>
+      </div>
+      <% } %>
+
+      <% if (typeof nuevoIngreso !== "undefined" && nuevoIngreso) { %>
+        <%# Solo en Nuevo Ingreso: lo que Felipe anota del paciente mientras lo tiene adelante.
+            Va a la observacion DEL PACIENTE (la que atraviesa todos sus episodios). %>
+        <div class="form-section">
+          <div class="section-header"><%= t('pre.observacionesTitulo') %></div>
+          <label class="form-label"><%= t('pre.notasPaciente') %> <span class="badge-opt"><%= t('pre.opcionalMinus') %></span></label>
+          <textarea name="observacionPaciente" class="form-control" rows="3"
+                    placeholder="<%= t('pre.notasPlaceholder') %>"></textarea>
+        </div>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% } %>
+
+      <input type="hidden" name="bodyChartData" id="bodyChartData">
+      <input type="hidden" name="linkId" id="linkId" value="<%= linkId || '' %>">
+      <%# Turno sin ficha (S3, fase 1a) que este ingreso viene a completar — ver GET
+          /admin/turnos/:id/ingreso. Solo existe en el camino de Nuevo Ingreso; el formulario
+          público nunca lo manda. %>
+      <input type="hidden" name="turnoId" value="<%= typeof turnoId !== 'undefined' && turnoId ? turnoId : '' %>">
+      <%# Turno S2 (sin ficha, reserva pública) que este formulario viene a completar — ver
+          GET /reservar/:token/preconsulta. Distinto de `turnoId` de arriba: ese es un id de la
+          base LOCAL (solo lo manda /admin/nuevo-ingreso, con sesión de panel); esto es el TOKEN
+          público del turno, la única credencial que este proceso público conoce. %>
+      <input type="hidden" name="turnoToken" id="turnoToken" value="<%= typeof turnoToken !== 'undefined' && turnoToken ? turnoToken : '' %>">
+      <input type="text" name="website" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true">
+
+      <button type="submit" class="btn btn-primary btn-lg w-100 mt-2"><%= typeof nuevoIngreso !== "undefined" && nuevoIngreso ? t('pre.crearIngreso') : t('pre.enviar') %></button>
+    </form>
+  </div>
+
+  <!-- scripts -->
+  <script src="/borrador.js"></script>
+  <script src="/index.js"></script>
+  <%# D136 — módulo: importa public/condiciones.js, la misma regla que usa el servidor. %>
+  <script type="module" src="/bloques.js"></script>
+  <%# D141 — deslizadores de los bloques y aviso del pretriage al paciente (importa la misma regla que el servidor). %>
+  <script type="module" src="/pretriajeFormulario.js"></script>
+  <% if (_esCierre) { %><script type="module" src="/psfsCierre.js"></script><% } %>
+  <script src="/vendor/sweetalert2.min.js"></script>
+</body>
+</html>
