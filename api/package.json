@@ -1,0 +1,19 @@
+{
+  "name": "fisiomondada-api",
+  "version": "1.0.0",
+  "description": "Formulario de contacto de la landing de Felipe Mondada",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.5.2",
+    "resend": "^6.18.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
